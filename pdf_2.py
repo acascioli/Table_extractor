@@ -70,31 +70,70 @@ class App(customtkinter.CTk):
             # Update the label to show that no file was selected
             self.file_label.configure(text="No file selected")
 
-    def extract_tables(self):
+    def extract_tables(self, page_input):
         self.process_label.configure(text="Processing...")
         file_folder = "".join(self.file_name.split(".")[:-1])
         file_folder = plib.Path(output_folder, file_folder)
         file_folder.mkdir(exist_ok=True)
         try:
             doc = fitz.open(self.file_path)
+            if page_input:
+                for i in page_input:
+                    tabs = doc[int(i)].find_tables()
 
-            for i, page in enumerate(doc):
+                    for j, tab in enumerate(tabs):
 
-                tabs = page.find_tables()
+                        df = tab.to_pandas()
+                        df = df.replace("\n", " ", regex=True)
+                        # df.to_csv(f"output/page_{i}_table_{j}.csv", index=False)
+                        file_output = plib.Path(file_folder, f"page_{i}_table_{j}.xlsx")
+                        df.to_excel(file_output, index=False)
+            else:
+                for i, page in enumerate(doc):
 
-                for j, tab in enumerate(tabs):
+                    tabs = page.find_tables()
 
-                    df = tab.to_pandas()
-                    df = df.replace("\n", " ", regex=True)
-                    # df.to_csv(f"output/page_{i}_table_{j}.csv", index=False)
-                    file_output = plib.Path(file_folder, f"page_{i}_table_{j}.xlsx")
-                    df.to_excel(file_output, index=False)
+                    for j, tab in enumerate(tabs):
+
+                        df = tab.to_pandas()
+                        df = df.replace("\n", " ", regex=True)
+                        # df.to_csv(f"output/page_{i}_table_{j}.csv", index=False)
+                        file_output = plib.Path(file_folder, f"page_{i}_table_{j}.xlsx")
+                        df.to_excel(file_output, index=False)
         except Exception as e:
             self.process_label.configure(text="❌ Something went wrong...")
             print(e)
 
+    def parse_page_input(self, page_input):
+        # Split the input string on commas to handle multiple entries
+        entries = page_input.split(",")
+        page_numbers = set()  # Use a set to avoid duplicate pages
+
+        for entry in entries:
+            entry = entry.strip()  # Remove whitespace
+            if "-" in entry:
+                # Handle ranges, e.g., '2-5'
+                start, end = entry.split("-")
+                page_numbers.update(range(int(start), int(end) + 1))
+            else:
+                # Handle single page numbers
+                page_numbers.add(int(entry))
+
+        return sorted(page_numbers)  # Return a sorted list of unique page numbers
+
     def button_callbck(self):
-        self.extract_tables()
+        page_input = self.page_entry.get()
+        try:
+            pages_to_process = self.parse_page_input(page_input)
+            print(f"Pages to process: {pages_to_process}")
+            merge = self.merge_var.get() == "on"
+            print(f"Merge output: {merge}")
+            # Add logic here to process the file using the extracted pages and merge option
+        except ValueError as e:
+            print("Invalid input for pages. Please enter valid page numbers or ranges.")
+            page_input = None
+
+        self.extract_tables(page_input)
         self.process_label.configure(text="✅ Completed!")
 
 
