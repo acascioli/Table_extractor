@@ -4,17 +4,29 @@ import pathlib as plib
 import customtkinter
 import os
 
-base_file = plib.Path(__file__).parents[0]
-input_folder = plib.Path(base_file, "input")
-input_folder.mkdir(exist_ok=True)
-output_folder = plib.Path(base_file, "output")
-output_folder.mkdir(exist_ok=True)
+
+def get_downloads_folder():
+    """Returns the path to the user's downloads folder, works cross-platform"""
+    home = os.path.expanduser("~")  # Gets the home directory
+
+    # Different OS have different default downloads folder paths
+    if os.name == "nt":  # Windows
+        return os.path.join(home, "Downloads")
+    elif os.name == "posix":  # macOS, Linux
+        return os.path.join(home, "Downloads")
+
+
+downloads_folder = get_downloads_folder()
+# Set output folder to the user's Downloads directory
 
 
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("400x500")
+        self.geometry("400x550")
+
+        self.output_folder = plib.Path(get_downloads_folder(), "output")
+        self.output_folder.mkdir(exist_ok=True)  # Ensure the folder exists
 
         # Button to open file dialog
         self.file_button = customtkinter.CTkButton(
@@ -50,14 +62,40 @@ class App(customtkinter.CTk):
         self.spacer_frame = customtkinter.CTkFrame(self, height=20, width=400)
         self.spacer_frame.pack()
 
+        # Button to open file dialog
+        self.save_path_button = customtkinter.CTkButton(
+            self, text="Select Destination", command=self.select_save_path
+        )
+        self.save_path_button.pack(padx=20, pady=(50, 0))
+
+        # Label to display the selected file name
+        self.save_path_label = customtkinter.CTkLabel(
+            self, text=str(self.output_folder.absolute())
+        )
+        self.save_path_label.pack(padx=20, pady=10)
+
         self.button = customtkinter.CTkButton(
             self, text="Process", command=self.button_callbck
         )
-        self.button.pack(padx=20, pady=(50, 0))
+        self.button.pack(padx=20, pady=10)
 
         # Label to display the processing status
         self.process_label = customtkinter.CTkLabel(self, text="Waiting for file...")
         self.process_label.pack(padx=20, pady=10)
+
+    def select_save_path(self):
+        # Open the file dialog to select a file
+        self.save_path = customtkinter.filedialog.askdirectory(
+            title="Select a destination"
+        )
+        if self.save_path:
+            self.output_folder = plib.Path(self.save_path)
+
+            # Update the label with the selected file name
+            self.save_path_label.configure(text=self.output_folder)
+        else:
+            # Update the label to show that no file was selected
+            pass
 
     def select_file(self):
         # Open the file dialog to select a file
@@ -73,7 +111,7 @@ class App(customtkinter.CTk):
     def extract_tables(self, page_input, merge):
         self.process_label.configure(text="Processing...")
         file_folder = "".join(self.file_name.split(".")[:-1])
-        file_folder = plib.Path(output_folder, file_folder)
+        file_folder = plib.Path(self.output_folder, file_folder)
         file_folder.mkdir(exist_ok=True)
 
         all_tables = []  # List to store all DataFrames
