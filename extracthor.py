@@ -24,6 +24,7 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.geometry("400x550")
+        self.title("Extrac-Thor")
 
         self.output_folder = plib.Path(get_downloads_folder(), "output")
         self.output_folder.mkdir(exist_ok=True)  # Ensure the folder exists

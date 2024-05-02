@@ -1,1 +1,1 @@
-pyinstaller --noconfirm --onedir --windowed --add-data "/media/DATA/OneDrive_AlCa/Python/_Automation/Tables/venv/lib/python3.11/site-packages/customtkinter:customtkinter/"  "/media/DATA/OneDrive_AlCa/Python/_Automation/Tables/pdf_2.py"
+pyinstaller --noconfirm --onedir --windowed --add-data "/media/DATA/OneDrive_AlCa/Python/_Automation/Tables/venv/lib/python3.11/site-packages/customtkinter:customtkinter/"  "/media/DATA/OneDrive_AlCa/Python/_Automation/Tables/extracthor.py"

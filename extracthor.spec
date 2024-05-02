@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['/media/DATA/OneDrive_AlCa/Python/_Automation/Tables/pdf_2.py'],
+    ['/media/DATA/OneDrive_AlCa/Python/_Automation/Tables/extracthor.py'],
     pathex=[],
     binaries=[],
     datas=[('/media/DATA/OneDrive_AlCa/Python/_Automation/Tables/venv/lib/python3.11/site-packages/customtkinter', 'customtkinter/')],
@@ -21,7 +21,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='pdf_2',
+    name='extracthor',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -40,5 +40,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='pdf_2',
+    name='extracthor',
 )
