@@ -70,36 +70,53 @@ class App(customtkinter.CTk):
             # Update the label to show that no file was selected
             self.file_label.configure(text="No file selected")
 
-    def extract_tables(self, page_input):
+    def extract_tables(self, page_input, merge):
         self.process_label.configure(text="Processing...")
         file_folder = "".join(self.file_name.split(".")[:-1])
         file_folder = plib.Path(output_folder, file_folder)
         file_folder.mkdir(exist_ok=True)
+
+        all_tables = []  # List to store all DataFrames
+
         try:
             doc = fitz.open(self.file_path)
-            if page_input:
-                for i in page_input:
-                    tabs = doc[int(i)].find_tables()
+            for i in page_input:
+                page = doc[int(i)]
+                tables = page.find_tables()
+                for j, table in enumerate(tables):
+                    df = table.to_pandas()
+                    # Save the original first row (if it was considered as header)
+                    original_first_row = (
+                        df.columns.tolist()
+                    )  # Make a copy of the first row
+                    # Generate dynamic column names
+                    col_names = [f"col_{index + 1}" for index in range(len(df.columns))]
+                    df.columns = col_names  # Set new column names
 
-                    for j, tab in enumerate(tabs):
-
-                        df = tab.to_pandas()
-                        df = df.replace("\n", " ", regex=True)
-                        # df.to_csv(f"output/page_{i}_table_{j}.csv", index=False)
+                    df.loc[-1] = original_first_row
+                    df.index = df.index + 1  # Shift all indices up by 1
+                    df.sort_index(
+                        inplace=True
+                    )  # Sort the DataFrame by index to place the original first row at the top
+                    df = df.replace("\n", " ", regex=True)
+                    print(df)
+                    print()
+                    if merge:
+                        # Add each table's DataFrame to the list
+                        all_tables.append(df)
+                    else:
+                        # Save each table to a separate file
                         file_output = plib.Path(file_folder, f"page_{i}_table_{j}.xlsx")
                         df.to_excel(file_output, index=False)
-            else:
-                for i, page in enumerate(doc):
 
-                    tabs = page.find_tables()
+            if merge:
+                # Concatenate all DataFrames and save to one file
+                combined_df = pd.concat(all_tables, ignore_index=True)
+                combined_file_output = plib.Path(file_folder, "combined_tables.xlsx")
+                combined_df.to_excel(combined_file_output, index=False)
 
-                    for j, tab in enumerate(tabs):
+            self.process_label.configure(text="✅ Completed!")
 
-                        df = tab.to_pandas()
-                        df = df.replace("\n", " ", regex=True)
-                        # df.to_csv(f"output/page_{i}_table_{j}.csv", index=False)
-                        file_output = plib.Path(file_folder, f"page_{i}_table_{j}.xlsx")
-                        df.to_excel(file_output, index=False)
         except Exception as e:
             self.process_label.configure(text="❌ Something went wrong...")
             print(e)
@@ -133,7 +150,7 @@ class App(customtkinter.CTk):
             print("Invalid input for pages. Please enter valid page numbers or ranges.")
             page_input = None
 
-        self.extract_tables(page_input)
+        self.extract_tables(pages_to_process, merge)
         self.process_label.configure(text="✅ Completed!")
 
 
